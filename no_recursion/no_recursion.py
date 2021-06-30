@@ -35,8 +35,9 @@ def no_recursion(function_or_namespace=None):
 
                 if hasattr(function_or_namespace.__globals__[f_name], "_nr_f"):
                     raise Exception(
-                        "You must define another function *below* your decorated function, "
-                        "*with the same name as the decorated function or decorated by `@function.replace` "
+                        "You must define another function *below* your decorated function "
+                        "*and it must be named the same name as the decorated function, or by using the "
+                        "`@function.replace` decorator on the replacement function"
                         "where `function` is the current decorated function*, which will be used to replace "
                         "the recursion calls with."
                     )
