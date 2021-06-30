@@ -44,7 +44,7 @@ def bin(n: int):
 
 @bin.replace
 def replace_bin(n: int):
-    return __builtins__.bin(n)
+    return builtins.bin(n)
 ```
 
 All examples above will produce the same result.
