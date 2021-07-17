@@ -9,10 +9,14 @@ def replace(with_):
     def wrapper(f):
         f._repl = with_
         return f
+
     return wrapper
 
 
 def no_recursion(function_or_namespace=None):
+    if isinstance(function_or_namespace, FunctionType) and function_or_namespace.__name__ == "<lambda>":
+        raise RuntimeError("You can't use no_recursion with lambda functions.")
+
     def replace(self, f):
         if hasattr(self, "_repl"):
             raise Exception("You can't set more that one replacement to a particular function")
@@ -42,6 +46,7 @@ def no_recursion(function_or_namespace=None):
                         "the recursion calls with."
                     )
                 return function_or_namespace.__globals__[f_name](*args, **kwargs)
+
         wrapper._nr_f = True
         wrapper.replace = partial(replace, function_or_namespace)
         return wrapper
@@ -51,6 +56,8 @@ def no_recursion(function_or_namespace=None):
                 code=f.__code__,
                 globals=function_or_namespace,
             )
+            if isinstance(new_f, FunctionType) and new_f.__name__ == "<lambda>":
+                raise RuntimeError("You can't use no_recursion with lambda functions.")
 
             @wraps(f)
             def i_wrapper(*args, **kwargs):
@@ -63,7 +70,7 @@ def no_recursion(function_or_namespace=None):
                                 "There is no function named '{}' in the provided namespace".format(new_f.__name__)
                             )
                     else:
-                        assert callable(function_or_namespace[new_f.__name__]),\
+                        assert callable(function_or_namespace[new_f.__name__]), \
                             "You must provide a Callable and not '{}'".format(
                                 type(function_or_namespace[new_f.__name__]).__name__
                             )
@@ -73,19 +80,21 @@ def no_recursion(function_or_namespace=None):
                                 "you provided both a replacement function and a valid Callable in the namespace!"
                             )
                     if hasattr(f, "_repl"):
-                        callback = f.__globals__[f._repl] if not callable(f._repl) else f._repl # noqa
+                        callback = f.__globals__[f._repl] if not callable(f._repl) else f._repl  # noqa
                     return callback(*args, **kwargs)
                 else:
                     raise Exception(
                         "The function '{0}' in the namespace you provided is the same as the current '{0}' function. "
                         "Which it leads to recursion. Try providing another namespace".format(f_name)
                     )
+
             i_wrapper._nr_f = True
             i_wrapper.replace = partial(replace, f)
             return i_wrapper
+
         return _wrapper
     else:
-        raise ValueError("You must specify either a namespace")
+        raise ValueError("You must specify a namespace")
 
 
 __all__ = ["no_recursion", "replace"]
